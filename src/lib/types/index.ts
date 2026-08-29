@@ -1,0 +1,155 @@
+export type UserRole = 'Admin' | 'CaseManager' | 'Staff' | 'Client';
+
+export interface Firm {
+  id: string;
+  name: string;
+  slug: string;
+  logoUrl?: string;
+  primaryColor: string; // e.g. "#0066FF"
+  secondaryColor?: string;
+  contactEmail: string;
+  phone?: string;
+  address?: string;
+  industry?: 'Accounting & CA' | 'Law & Legal' | 'Financial Advisory' | 'Consulting & Agency' | 'Other';
+  createdAt: string;
+  updatedAt?: string;
+}
+
+export interface UserProfile {
+  id: string;
+  email: string;
+  name: string;
+  role: UserRole;
+  firmId: string;
+  avatarUrl?: string;
+  title?: string;
+  createdAt: string;
+}
+
+export type CaseStatus = 
+  | 'Invited'
+  | 'Form Submitted'
+  | 'Documents Pending'
+  | 'Under Review'
+  | 'Approved'
+  | 'Rejected';
+
+export type FormFieldType = 
+  | 'text' 
+  | 'number' 
+  | 'date' 
+  | 'dropdown' 
+  | 'checkbox' 
+  | 'file' 
+  | 'yesno' 
+  | 'textarea' 
+  | 'multiselect';
+
+export type ConditionOperator = 
+  | 'equals' 
+  | 'not_equals' 
+  | 'contains' 
+  | 'is_checked' 
+  | 'is_not_checked' 
+  | 'is_empty' 
+  | 'is_not_empty';
+
+export interface FieldCondition {
+  triggerFieldId: string;
+  operator: ConditionOperator;
+  value: any;
+}
+
+export interface FormField {
+  id: string;
+  label: string;
+  type: FormFieldType;
+  placeholder?: string;
+  helpText?: string;
+  required: boolean;
+  options?: string[]; // for dropdown, multiselect
+  condition?: FieldCondition;
+  defaultValue?: any;
+}
+
+export interface FormTemplate {
+  id: string;
+  firmId: string;
+  title: string;
+  description: string;
+  category: string;
+  fields: FormField[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface DocVersion {
+  version: number;
+  fileName: string;
+  fileUrl: string;
+  fileSize: number; // in bytes
+  fileType: string;
+  uploadedAt: string;
+  uploadedBy: string;
+}
+
+export type DocStatus = 'Not Started' | 'Uploaded' | 'Approved' | 'Rejected';
+
+export interface ChecklistItem {
+  id: string;
+  name: string;
+  description?: string;
+  required: boolean;
+  status: DocStatus;
+  rejectionReason?: string;
+  approvedAt?: string;
+  approvedBy?: string;
+  versions: DocVersion[];
+}
+
+export interface ClientCase {
+  id: string;
+  firmId: string;
+  clientName: string;
+  clientEmail: string;
+  clientCompany?: string;
+  title: string;
+  status: CaseStatus;
+  formTemplateId: string;
+  formResponses: Record<string, any>;
+  formSubmittedAt?: string;
+  checklist: ChecklistItem[];
+  assignedTo?: string; // staff/case manager userId
+  assignedToName?: string;
+  notes?: string;
+  createdAt: string;
+  updatedAt: string;
+  portalToken?: string;
+}
+
+export interface AuditLogEntry {
+  id: string;
+  firmId: string;
+  caseId?: string;
+  caseTitle?: string;
+  timestamp: string;
+  actorId: string;
+  actorName: string;
+  actorRole: UserRole;
+  action: string; // e.g. "Case Created", "Form Submitted", "Document Uploaded", "Document Approved", "Document Rejected", "Status Changed", "User Invited"
+  targetEntity: string; // e.g. "Case #102", "Tax Return 2023.pdf", "Sarah Jenkins"
+  details?: string;
+}
+
+export interface EmailNotification {
+  id: string;
+  firmId: string;
+  to: string;
+  recipientName: string;
+  subject: string;
+  bodyText: string;
+  type: 'invitation' | 'doc_rejected' | 'status_change' | 'form_submitted' | 'doc_uploaded';
+  sentAt: string;
+  status: 'delivered' | 'simulated' | 'failed';
+  metadata?: Record<string, any>;
+}

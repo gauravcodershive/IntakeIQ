@@ -1,0 +1,78 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper functions for Multi-Tenant RBAC
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function getUserFirmId() {
+      return request.auth.token.firmId;
+    }
+    
+    function getUserRole() {
+      return request.auth.token.role;
+    }
+    
+    function isSameTenant(firmId) {
+      return isAuthenticated() && getUserFirmId() == firmId;
+    }
+    
+    function isAdmin(firmId) {
+      return isSameTenant(firmId) && getUserRole() == 'Admin';
+    }
+    
+    function isCaseManager(firmId) {
+      return isSameTenant(firmId) && (getUserRole() == 'CaseManager' || getUserRole() == 'Admin');
+    }
+    
+    function isStaff(firmId) {
+      return isSameTenant(firmId) && (getUserRole() == 'Staff' || getUserRole() == 'CaseManager' || getUserRole() == 'Admin');
+    }
+
+    // Top-Level Firm Document
+    match /firms/{firmId} {
+      allow read: if isSameTenant(firmId) || resource.data.slug != null; // Slug readable for public portal
+      allow create: if isAuthenticated();
+      allow update, delete: if isAdmin(firmId);
+      
+      // Firm Users Subcollection
+      match /users/{userId} {
+        allow read: if isSameTenant(firmId);
+        allow write: if isAdmin(firmId);
+      }
+      
+      // Form Templates Subcollection
+      match /formTemplates/{templateId} {
+        allow read: if isSameTenant(firmId);
+        allow write: if isCaseManager(firmId);
+      }
+      
+      // Cases Subcollection
+      match /cases/{caseId} {
+        // Staff and above can read/list; Client can read only their own case
+        allow read: if isStaff(firmId) || (isAuthenticated() && request.auth.token.caseId == caseId);
+        allow create: if isCaseManager(firmId);
+        allow update: if isCaseManager(firmId) || 
+          (isAuthenticated() && request.auth.token.caseId == caseId && 
+           request.resource.data.diff(resource.data).affectedKeys().hasOnly(['formResponses', 'formSubmittedAt', 'checklist']));
+        allow delete: if isAdmin(firmId);
+      }
+      
+      // Documents Metadata Subcollection
+      match /documents/{docId} {
+        allow read: if isStaff(firmId) || (isAuthenticated() && request.auth.token.caseId == resource.data.caseId);
+        allow create, update: if isCaseManager(firmId) || (isAuthenticated() && request.auth.token.caseId == request.resource.data.caseId);
+        allow delete: if isAdmin(firmId);
+      }
+      
+      // Immutable Audit Log Subcollection (Append-only)
+      match /auditLog/{logId} {
+        allow read: if isCaseManager(firmId);
+        allow create: if isSameTenant(firmId) || isAuthenticated();
+        allow update, delete: if false; // Immutable!
+      }
+    }
+  }
+}
