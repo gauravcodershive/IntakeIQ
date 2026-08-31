@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
+import LogoMark from "@/components/shared/LogoMark";
 import {
   ChevronDown,
   Menu,
@@ -52,9 +53,7 @@ export default function Navbar({ onRequestDemo, onOpenLogin }: NavbarProps) {
             href="/"
             className="flex items-center gap-2.5 group rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2"
           >
-            <div className="w-9 h-9 rounded-xl bg-brand-900 flex items-center justify-center text-white font-bold text-lg shadow-sm group-hover:bg-brand-600 transition-colors">
-              <span className="text-white">IQ</span>
-            </div>
+            <LogoMark className="w-9 h-9 shrink-0 drop-shadow-sm transition-transform duration-200 group-hover:scale-105" />
             <div className="flex flex-col">
               <span className="text-xl font-bold tracking-tight text-brand-900 leading-none">
                 Intake<span className="text-brand-500">IQ</span>

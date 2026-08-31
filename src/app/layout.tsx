@@ -28,9 +28,6 @@ export const metadata: Metadata = {
     "multi-tenant onboarding",
   ],
   authors: [{ name: "IntakeIQ" }],
-  icons: {
-    icon: "/favicon.ico",
-  },
   openGraph: {
     title: "IntakeIQ — Client Onboarding, Without the Chaos",
     description:

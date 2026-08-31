@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { ShieldCheck, Mail, ArrowRight, CheckCircle2, Linkedin, Twitter, Github, Loader2 } from "lucide-react";
 import { useToast } from "@/components/shared/ToastProvider";
+import LogoMark from "@/components/shared/LogoMark";
 
 export default function Footer({ onRequestDemo }: { onRequestDemo: () => void }) {
   const toast = useToast();
@@ -88,9 +89,7 @@ export default function Footer({ onRequestDemo }: { onRequestDemo: () => void })
           {/* Brand Column */}
           <div className="col-span-2 space-y-4">
             <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-lg bg-brand-500 flex items-center justify-center text-white font-bold text-base">
-                IQ
-              </div>
+              <LogoMark className="w-8 h-8 shrink-0" />
               <span className="text-xl font-bold tracking-tight text-white">
                 Intake<span className="text-brand-500">IQ</span>
               </span>
