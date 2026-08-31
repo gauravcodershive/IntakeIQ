@@ -2,7 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/lib/context/AuthContext";
 import { useTenant } from "@/lib/context/TenantContext";
 import { DataStore } from "@/lib/store/dataStore";
@@ -22,6 +22,7 @@ import {
   LogOut,
   X,
 } from "lucide-react";
+import { PermissionAction, hasPermission, getRoleBadgeStyle } from "@/lib/auth/permissions";
 
 interface SidebarProps {
   isOpen?: boolean;
@@ -30,6 +31,7 @@ interface SidebarProps {
 
 export default function Sidebar({ isOpen = false, onClose }: SidebarProps) {
   const pathname = usePathname();
+  const router = useRouter();
   const { currentUser, role, logout } = useAuth();
   const { currentFirm } = useTenant();
   const toast = useToast();
@@ -41,57 +43,62 @@ export default function Sidebar({ isOpen = false, onClose }: SidebarProps) {
 
   const handleLogout = () => {
     logout();
-    toast.info("Switched back to the default user.");
+    toast.info("Logged out successfully.");
+    router.push("/auth/login");
   };
 
-  const navigation = [
+  const navigation: {
+    name: string;
+    href: string;
+    icon: any;
+    match: (p: string) => boolean;
+    permission?: PermissionAction;
+  }[] = [
     {
       name: "Clients & Cases",
       href: "/dashboard",
       icon: FolderKanban,
       match: (p: string) => p === "/dashboard" || p.startsWith("/dashboard/cases"),
+      permission: "cases:view",
     },
     {
       name: "Form Templates",
       href: "/dashboard/forms",
       icon: FileSpreadsheet,
       match: (p: string) => p.startsWith("/dashboard/forms"),
-      adminOnly: false,
+      permission: "forms:view",
     },
     {
       name: "Team & Roles",
       href: "/dashboard/team",
       icon: Users,
       match: (p: string) => p.startsWith("/dashboard/team"),
-      adminOnly: true,
+      permission: "team:view",
     },
     {
       name: "Firm Settings & Branding",
       href: "/dashboard/settings",
       icon: Settings,
       match: (p: string) => p.startsWith("/dashboard/settings"),
-      adminOnly: true,
+      permission: "settings:view",
     },
     {
       name: "Audit Trail",
       href: "/dashboard/audit",
       icon: ShieldAlert,
       match: (p: string) => p.startsWith("/dashboard/audit"),
+      permission: "audit:view",
     },
     {
       name: "Email Outbox",
       href: "/dashboard/outbox",
       icon: Mail,
       match: (p: string) => p.startsWith("/dashboard/outbox"),
+      permission: "outbox:view",
     },
   ];
 
-  const roleColors: Record<string, string> = {
-    Admin: "bg-purple-100 text-purple-800 border-purple-200",
-    CaseManager: "bg-blue-100 text-blue-800 border-blue-200",
-    Staff: "bg-emerald-100 text-emerald-800 border-emerald-200",
-    Client: "bg-amber-100 text-amber-800 border-amber-200",
-  };
+  const roleStyle = getRoleBadgeStyle(role);
 
   return (
     <aside
@@ -146,21 +153,21 @@ export default function Sidebar({ isOpen = false, onClose }: SidebarProps) {
         </div>
         {navigation.map((item) => {
           const isActive = item.match(pathname);
-          const isRestricted = item.adminOnly && role !== "Admin";
+          const isRestricted = item.permission ? !hasPermission(role, item.permission) : false;
           const Icon = item.icon;
 
           if (isRestricted) {
             return (
               <div
                 key={item.name}
-                title="Admin role required"
-                className="flex items-center justify-between px-3 py-2 rounded-lg text-xs text-slate-300 cursor-not-allowed opacity-75"
+                title="Role permission required"
+                className="flex items-center justify-between px-3 py-2 rounded-lg text-xs text-slate-400 cursor-not-allowed opacity-60"
               >
                 <div className="flex items-center gap-2.5">
-                  <Icon className="w-4 h-4 text-slate-300" />
+                  <Icon className="w-4 h-4 text-slate-400" />
                   <span>{item.name}</span>
                 </div>
-                <Lock className="w-3 h-3 text-slate-300" />
+                <Lock className="w-3 h-3 text-slate-400" />
               </div>
             );
           }
@@ -219,9 +226,7 @@ export default function Sidebar({ isOpen = false, onClose }: SidebarProps) {
                 {currentUser?.name || "Eleanor Vance"}
               </p>
               <span
-                className={`inline-block mt-0.5 px-1.5 py-0.2 text-[10px] font-medium rounded border ${
-                  roleColors[role] || "bg-slate-800 text-slate-300"
-                }`}
+                className={`inline-block mt-0.5 px-1.5 py-0.2 text-[10px] font-medium rounded border ${roleStyle.badgeClass}`}
               >
                 {role}
               </span>

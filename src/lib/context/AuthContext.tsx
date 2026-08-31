@@ -9,6 +9,7 @@ interface AuthContextType {
   currentUser: UserProfile | null;
   role: UserRole;
   isAuthenticated: boolean;
+  isInitialized: boolean;
   login: (email: string) => boolean;
   signupAdmin: (data: {
     firmName: string;
@@ -31,34 +32,37 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const { currentFirm, refreshFirms, switchFirm } = useTenant();
   const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
   const [firmUsers, setFirmUsers] = useState<UserProfile[]>([]);
+  const [isInitialized, setIsInitialized] = useState(false);
 
   const refreshUsers = () => {
     DataStore.initSeedData();
     const users = DataStore.getUsers(currentFirm?.id);
     setFirmUsers(users);
 
-    const savedUserId = typeof window !== "undefined" ? sessionStorage.getItem("intakeiq_current_user_id") : null;
+    const savedUserId = typeof window !== "undefined" 
+      ? (sessionStorage.getItem("intakeiq_current_user_id") || localStorage.getItem("intakeiq_current_user_id"))
+      : null;
+
     if (savedUserId) {
-      const found = users.find(u => u.id === savedUserId);
+      const allUsers = DataStore.getUsers();
+      const found = allUsers.find(u => u.id === savedUserId);
       if (found) {
         setCurrentUser(found);
+        setIsInitialized(true);
         return;
       }
     }
 
-    // Default to first user (Admin) or fallback
-    if (users.length > 0) {
-      setCurrentUser(users[0]);
-    }
+    setCurrentUser(null);
+    setIsInitialized(true);
   };
 
   useEffect(() => {
-    if (currentFirm) {
-      refreshUsers();
-    }
+    refreshUsers();
   }, [currentFirm?.id]);
 
   const login = (email: string): boolean => {
+    DataStore.initSeedData();
     const allUsers = DataStore.getUsers();
     const user = allUsers.find(u => u.email.toLowerCase() === email.toLowerCase());
     if (user) {
@@ -66,6 +70,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       switchFirm(user.firmId);
       if (typeof window !== "undefined") {
         sessionStorage.setItem("intakeiq_current_user_id", user.id);
+        localStorage.setItem("intakeiq_current_user_id", user.id);
       }
       return true;
     }
@@ -145,6 +150,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setCurrentUser(newAdmin);
     if (typeof window !== "undefined") {
       sessionStorage.setItem("intakeiq_current_user_id", newAdmin.id);
+      localStorage.setItem("intakeiq_current_user_id", newAdmin.id);
     }
   };
 
@@ -156,6 +162,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setCurrentUser(matchedUser);
       if (typeof window !== "undefined") {
         sessionStorage.setItem("intakeiq_current_user_id", matchedUser.id);
+        localStorage.setItem("intakeiq_current_user_id", matchedUser.id);
       }
     } else {
       // Create a temporary user with that role
@@ -170,6 +177,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       refreshUsers();
       if (typeof window !== "undefined") {
         sessionStorage.setItem("intakeiq_current_user_id", tempUser.id);
+        localStorage.setItem("intakeiq_current_user_id", tempUser.id);
       }
     }
   };
@@ -181,6 +189,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       switchFirm(user.firmId);
       if (typeof window !== "undefined") {
         sessionStorage.setItem("intakeiq_current_user_id", user.id);
+        localStorage.setItem("intakeiq_current_user_id", user.id);
       }
     }
   };
@@ -188,12 +197,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const logout = () => {
     if (typeof window !== "undefined") {
       sessionStorage.removeItem("intakeiq_current_user_id");
+      localStorage.removeItem("intakeiq_current_user_id");
     }
-    // Switch to first admin user
-    const users = DataStore.getUsers();
-    if (users.length > 0) {
-      setCurrentUser(users[0]);
-    }
+    setCurrentUser(null);
   };
 
   return (
@@ -202,6 +208,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         currentUser,
         role: currentUser?.role || "Admin",
         isAuthenticated: Boolean(currentUser),
+        isInitialized,
         login,
         signupAdmin,
         switchRole,

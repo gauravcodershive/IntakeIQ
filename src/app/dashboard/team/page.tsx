@@ -6,6 +6,8 @@ import { useTenant } from "@/lib/context/TenantContext";
 import { DataStore } from "@/lib/store/dataStore";
 import { UserProfile, UserRole } from "@/lib/types";
 import { useToast } from "@/components/shared/ToastProvider";
+import { RoleGuard } from "@/components/shared/RoleGuard";
+import { hasPermission, getRoleBadgeStyle } from "@/lib/auth/permissions";
 import {
   Users,
   UserPlus,
@@ -120,7 +122,17 @@ export default function TeamPage() {
           </p>
         </div>
 
-        {isAdmin && (
+        <RoleGuard
+          requiredPermission="team:invite"
+          fallback={
+            <div className="p-3 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-800 flex items-center gap-2.5">
+              <Lock className="w-4 h-4 text-amber-600 flex-shrink-0" />
+              <span>
+                You are currently in <strong>{role}</strong> mode. Only users with the <code>team:invite</code> permission (Firm Admins) can invite teammates.
+              </span>
+            </div>
+          }
+        >
           <button
             type="button"
             onClick={() => setIsInviteModalOpen(true)}
@@ -130,17 +142,8 @@ export default function TeamPage() {
             <UserPlus className="w-4 h-4" />
             <span>Invite Team Member</span>
           </button>
-        )}
+        </RoleGuard>
       </div>
-
-      {!isAdmin && (
-        <div className="p-4 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-800 flex items-center gap-2.5">
-          <Lock className="w-4 h-4 text-amber-600 flex-shrink-0" />
-          <span>
-            You are currently viewing in <strong>{role}</strong> mode. Only Firm Admins can invite new team members or modify roles. Use the demo switcher at the top to toggle to Admin!
-          </span>
-        </div>
-      )}
 
       {/* Team Table */}
       <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden text-xs">
@@ -178,12 +181,7 @@ export default function TeamPage() {
               </tr>
             ) : (
             teamMembers.map((member) => {
-              const roleBadge = {
-                Admin: "bg-purple-50 text-purple-700 border-purple-200",
-                CaseManager: "bg-blue-50 text-blue-700 border-blue-200",
-                Staff: "bg-emerald-50 text-emerald-700 border-emerald-200",
-                Client: "bg-amber-50 text-amber-700 border-amber-200",
-              }[member.role] || "bg-slate-100 text-slate-700";
+              const roleStyle = getRoleBadgeStyle(member.role);
 
               return (
                 <tr key={member.id} className="hover:bg-slate-50/80 transition">
@@ -199,7 +197,7 @@ export default function TeamPage() {
                     </div>
                   </td>
                   <td className="py-3 px-4">
-                    <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold border ${roleBadge}`}>
+                    <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold border ${roleStyle.badgeClass}`}>
                       {member.role === "Admin" && <ShieldCheck className="w-3 h-3 text-purple-600" />}
                       {member.role === "CaseManager" && <UserCheck className="w-3 h-3 text-blue-600" />}
                       {member.role === "Staff" && <Eye className="w-3 h-3 text-emerald-600" />}

@@ -1,10 +1,11 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { Menu } from "lucide-react";
 import Sidebar from "@/components/dashboard/Sidebar";
 import DemoSwitcher from "@/components/shared/DemoSwitcher";
+import { useAuth } from "@/lib/context/AuthContext";
 
 export default function DashboardLayout({
   children,
@@ -12,7 +13,16 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
+  const router = useRouter();
+  const { currentUser, isInitialized } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  // Authentication Guard: Redirect unauthenticated users to /auth/login
+  useEffect(() => {
+    if (isInitialized && !currentUser) {
+      router.replace("/auth/login");
+    }
+  }, [isInitialized, currentUser, router]);
 
   // Close the mobile nav drawer whenever the route changes.
   useEffect(() => {
@@ -33,6 +43,17 @@ export default function DashboardLayout({
       document.body.style.overflow = prevOverflow;
     };
   }, [sidebarOpen]);
+
+  if (!isInitialized || !currentUser) {
+    return (
+      <div className="min-h-screen bg-slate-900 flex flex-col items-center justify-center text-white gap-3 p-4">
+        <div className="w-8 h-8 border-3 border-brand-500 border-t-transparent rounded-full animate-spin" />
+        <p className="text-xs font-semibold text-slate-300 tracking-wide">
+          Verifying session authentication...
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-slate-100 flex flex-col selection:bg-brand-500 selection:text-white">
