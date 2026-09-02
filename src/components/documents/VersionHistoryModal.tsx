@@ -44,21 +44,21 @@ export default function VersionHistoryModal({
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="p-4 sm:p-5 border-b border-slate-200 flex items-center justify-between bg-slate-50">
-          <div className="flex items-center gap-2.5">
-            <div className="p-2 bg-brand-50 text-brand-600 rounded-lg">
+        <div className="p-4 sm:p-5 border-b border-slate-200 flex items-center justify-between gap-3 bg-slate-50">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="p-2 bg-brand-50 text-brand-600 rounded-lg shrink-0">
               <History className="w-5 h-5" />
             </div>
-            <div>
+            <div className="min-w-0">
               <h3 id="version-history-title" className="text-sm font-bold text-slate-900">Document Version History</h3>
-              <p className="text-xs text-slate-500 truncate max-w-xs">{item.name}</p>
+              <p className="text-xs text-slate-500 truncate">{item.name}</p>
             </div>
           </div>
           <button
             ref={closeButtonRef}
             onClick={onClose}
             aria-label="Close version history"
-            className="min-w-[44px] min-h-[44px] flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-200 active:scale-[0.98] rounded-lg transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2"
+            className="min-w-[44px] min-h-[44px] flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-200 active:scale-[0.98] rounded-lg transition-all duration-150 shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2"
           >
             <X className="w-5 h-5" />
           </button>
@@ -81,12 +81,12 @@ export default function VersionHistoryModal({
                     : "bg-slate-50 border-slate-200"
                 }`}
               >
-                <div className="flex items-start justify-between gap-3 mb-2">
-                  <div className="flex items-center gap-2">
-                    <span className="px-2 py-0.5 rounded-md font-bold text-[10px] bg-slate-800 text-white">
+                <div className="flex flex-wrap items-start justify-between gap-2 mb-2">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className="px-2 py-0.5 rounded-md font-bold text-[10px] bg-slate-800 text-white shrink-0">
                       v{ver.version} {idx === 0 ? "(Current)" : ""}
                     </span>
-                    <span className="font-semibold text-slate-900 truncate max-w-[200px]">
+                    <span className="font-semibold text-slate-900 truncate max-w-[160px] sm:max-w-[200px]">
                       {ver.fileName}
                     </span>
                   </div>
@@ -95,7 +95,7 @@ export default function VersionHistoryModal({
                     href={ver.fileUrl}
                     target="_blank"
                     rel="noreferrer"
-                    className="inline-flex items-center gap-1 px-2.5 py-1.5 text-[11px] font-semibold text-brand-700 bg-white hover:bg-brand-100/50 active:scale-[0.98] rounded-lg border border-brand-200 transition-all duration-150 shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2"
+                    className="inline-flex items-center gap-1 px-2.5 py-1.5 text-[11px] font-semibold text-brand-700 bg-white hover:bg-brand-100/50 active:scale-[0.98] rounded-lg border border-brand-200 transition-all duration-150 shadow-sm shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2"
                   >
                     <Download className="w-3 h-3" />
                     <span>View / Open</span>

@@ -9,6 +9,16 @@ interface DemoModalProps {
   initialPlan?: string | null;
 }
 
+// Maps the stable industry-card id (IndustrySolutions.tsx) to this modal's
+// Industry <select> option text, so clicking a specific card pre-selects the
+// matching industry instead of always defaulting to the first option.
+const INDUSTRY_ID_TO_LABEL: Record<string, string> = {
+  accounting: "Accounting & CA Firm",
+  legal: "Law Firm / Legal Practice",
+  advisory: "Financial & Wealth Advisory",
+  agencies: "Client Services Agency",
+};
+
 export default function DemoModal({ isOpen, onClose, initialPlan = null }: DemoModalProps) {
   const [submitted, setSubmitted] = useState<boolean>(false);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
@@ -20,6 +30,14 @@ export default function DemoModal({ isOpen, onClose, initialPlan = null }: DemoM
     firmType: "Accounting & CA Firm",
     firmSize: "11-50 team members",
   });
+
+  const industryLabel = typeof initialPlan === "string" ? INDUSTRY_ID_TO_LABEL[initialPlan] : undefined;
+  const planLabel = typeof initialPlan === "string" && !industryLabel ? initialPlan : undefined;
+
+  useEffect(() => {
+    if (!isOpen || !industryLabel) return;
+    setFormData((prev) => ({ ...prev, firmType: industryLabel }));
+  }, [isOpen, industryLabel]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -68,9 +86,14 @@ export default function DemoModal({ isOpen, onClose, initialPlan = null }: DemoM
             <h3 id="demo-modal-title" className="text-xl font-bold text-white mt-0.5">
               Request a Guided Demo
             </h3>
-            {typeof initialPlan === "string" && initialPlan && (
+            {planLabel && (
               <span className="inline-block mt-1.5 text-[11px] font-semibold text-brand-200 bg-white/10 px-2 py-0.5 rounded-full">
-                Regarding: {initialPlan} plan
+                Regarding: {planLabel} plan
+              </span>
+            )}
+            {industryLabel && (
+              <span className="inline-block mt-1.5 text-[11px] font-semibold text-brand-200 bg-white/10 px-2 py-0.5 rounded-full">
+                Regarding: {industryLabel}
               </span>
             )}
           </div>

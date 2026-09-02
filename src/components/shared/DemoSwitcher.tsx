@@ -6,6 +6,7 @@ import { useTenant } from "@/lib/context/TenantContext";
 import { UserRole } from "@/lib/types";
 import { DataStore } from "@/lib/store/dataStore";
 import { useConfirm } from "@/components/shared/ConfirmProvider";
+import NotificationBell from "@/components/shared/NotificationBell";
 import {
   Building2,
   ShieldCheck,
@@ -190,6 +191,9 @@ export default function DemoSwitcher() {
             <ExternalLink className="w-3.5 h-3.5 text-cyan-400" />
             <span className="hidden sm:inline">Client Portal</span>
           </Link>
+
+          {/* In-App Notifications */}
+          <NotificationBell firmId={currentFirm?.id} />
 
           {/* Email Outbox */}
           <Link

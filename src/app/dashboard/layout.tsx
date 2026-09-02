@@ -6,6 +6,8 @@ import { Menu } from "lucide-react";
 import Sidebar from "@/components/dashboard/Sidebar";
 import DemoSwitcher from "@/components/shared/DemoSwitcher";
 import { useAuth } from "@/lib/context/AuthContext";
+import { useTenant } from "@/lib/context/TenantContext";
+import { DataStore } from "@/lib/store/dataStore";
 
 export default function DashboardLayout({
   children,
@@ -15,6 +17,7 @@ export default function DashboardLayout({
   const pathname = usePathname();
   const router = useRouter();
   const { currentUser, isInitialized } = useAuth();
+  const { currentFirm } = useTenant();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // Authentication Guard: Redirect unauthenticated users to /auth/login
@@ -23,6 +26,26 @@ export default function DashboardLayout({
       router.replace("/auth/login");
     }
   }, [isInitialized, currentUser, router]);
+
+  // Client accounts are only ever meant to use the branded portal — a Client
+  // role has no dashboard permissions in the matrix at all (see
+  // src/lib/auth/permissions.ts), so it must never be able to browse
+  // /dashboard/* and see other clients' cases or the internal staff roster.
+  useEffect(() => {
+    if (!isInitialized || !currentUser || currentUser.role !== "Client") return;
+
+    const ownCase = currentFirm
+      ? DataStore.getCases(currentFirm.id).find(
+          (c) => c.clientEmail.toLowerCase() === currentUser.email.toLowerCase()
+        )
+      : undefined;
+
+    if (ownCase && currentFirm) {
+      router.replace(`/portal/${currentFirm.slug}/${ownCase.id}`);
+    } else {
+      router.replace("/auth/login");
+    }
+  }, [isInitialized, currentUser, currentFirm, router]);
 
   // Close the mobile nav drawer whenever the route changes.
   useEffect(() => {
@@ -44,12 +67,12 @@ export default function DashboardLayout({
     };
   }, [sidebarOpen]);
 
-  if (!isInitialized || !currentUser) {
+  if (!isInitialized || !currentUser || currentUser.role === "Client") {
     return (
       <div className="min-h-screen bg-slate-900 flex flex-col items-center justify-center text-white gap-3 p-4">
         <div className="w-8 h-8 border-3 border-brand-500 border-t-transparent rounded-full animate-spin" />
         <p className="text-xs font-semibold text-slate-300 tracking-wide">
-          Verifying session authentication...
+          {currentUser?.role === "Client" ? "Redirecting to your client portal..." : "Verifying session authentication..."}
         </p>
       </div>
     );

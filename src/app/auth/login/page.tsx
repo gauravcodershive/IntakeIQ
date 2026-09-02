@@ -41,7 +41,7 @@ export default function LoginPage() {
 
   const [activeTab, setActiveTab] = useState<"firm" | "client">("firm");
   const [email, setEmail] = useState("admin@apexadvisory.com");
-  const [password, setPassword] = useState("••••••••");
+  const [password, setPassword] = useState("demo-password-2026");
   const [tenantSlug, setTenantSlug] = useState("apex-advisory");
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);

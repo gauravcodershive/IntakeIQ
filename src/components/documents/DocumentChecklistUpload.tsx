@@ -13,7 +13,8 @@ import {
   History,
   FileText,
   Download,
-  RefreshCw
+  RefreshCw,
+  Sparkles
 } from "lucide-react";
 
 interface DocumentChecklistUploadProps {
@@ -204,6 +205,17 @@ export default function DocumentChecklistUpload({
                   <Download className="w-3.5 h-3.5 text-slate-500" />
                   <span>Download / Preview</span>
                 </a>
+              </div>
+            )}
+
+            {/* AI Extraction Confirmation (client-facing, no internal cross-check detail) */}
+            {item.extraction && (
+              <div className="mb-3 flex items-center gap-1.5 text-[11px] text-brand-700 bg-brand-50 border border-brand-200/70 rounded-lg px-2.5 py-1.5">
+                <Sparkles className="w-3 h-3 shrink-0" />
+                <span>
+                  Automatically scanned — {item.extraction.fields.length} data field{item.extraction.fields.length === 1 ? "" : "s"} detected from your{" "}
+                  {item.extraction.documentType.toLowerCase()}.
+                </span>
               </div>
             )}
 

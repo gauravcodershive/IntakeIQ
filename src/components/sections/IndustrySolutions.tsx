@@ -5,7 +5,7 @@ import { FileSpreadsheet, Scale, Landmark, Briefcase, ArrowRight, Check } from "
 import Reveal from "../shared/Reveal";
 
 interface IndustrySolutionsProps {
-  onRequestDemo: () => void;
+  onRequestDemo: (context?: string) => void;
 }
 
 export default function IndustrySolutions({ onRequestDemo }: IndustrySolutionsProps) {
@@ -116,7 +116,7 @@ export default function IndustrySolutions({ onRequestDemo }: IndustrySolutionsPr
                 <div>
                   <button
                     type="button"
-                    onClick={() => onRequestDemo()}
+                    onClick={() => onRequestDemo(item.id)}
                     className="w-full py-2 px-3 text-xs font-semibold text-brand-600 bg-brand-50 hover:bg-brand-500 hover:text-white active:bg-brand-700 rounded-lg transition-colors duration-150 flex items-center justify-center gap-1.5 group-hover:bg-brand-500 group-hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2"
                   >
                     <span>Request Demo for {item.title.split(" ")[0]}</span>

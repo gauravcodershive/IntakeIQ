@@ -95,6 +95,22 @@ export interface DocVersion {
 
 export type DocStatus = 'Not Started' | 'Uploaded' | 'Approved' | 'Rejected';
 
+export type ExtractedFieldStatus = 'match' | 'mismatch' | 'unverified';
+
+export interface ExtractedField {
+  label: string;
+  value: string;
+  status: ExtractedFieldStatus;
+}
+
+export interface DocumentExtraction {
+  documentType: string; // e.g. "Government ID", "Bank Statement", "Tax / Financial Form"
+  confidence: number; // 0-100
+  extractedAt: string;
+  fields: ExtractedField[];
+  crossCheckSummary: string; // e.g. "2 of 3 fields matched form responses"
+}
+
 export interface ChecklistItem {
   id: string;
   name: string;
@@ -105,6 +121,7 @@ export interface ChecklistItem {
   approvedAt?: string;
   approvedBy?: string;
   versions: DocVersion[];
+  extraction?: DocumentExtraction;
 }
 
 export interface ClientCase {
@@ -152,4 +169,24 @@ export interface EmailNotification {
   sentAt: string;
   status: 'delivered' | 'simulated' | 'failed';
   metadata?: Record<string, any>;
+}
+
+export type NotificationType =
+  | 'case_assigned'
+  | 'form_submitted'
+  | 'doc_uploaded'
+  | 'doc_approved'
+  | 'doc_rejected'
+  | 'extraction_flagged'
+  | 'case_approved';
+
+export interface AppNotification {
+  id: string;
+  firmId: string;
+  type: NotificationType;
+  title: string;
+  message: string;
+  caseId?: string;
+  read: boolean;
+  createdAt: string;
 }

@@ -7,6 +7,7 @@ import DynamicFormRenderer from "./DynamicFormRenderer";
 import { useToast } from "@/components/shared/ToastProvider";
 import { useConfirm } from "@/components/shared/ConfirmProvider";
 import {
+  Lock,
   Plus,
   ArrowUp,
   ArrowDown,
@@ -28,12 +29,14 @@ interface DynamicFormBuilderProps {
   initialTemplate?: FormTemplate | null;
   onSave: (templateData: { title: string; description: string; category: string; fields: FormField[] }) => void;
   onCancel?: () => void;
+  readOnly?: boolean;
 }
 
 export default function DynamicFormBuilder({
   initialTemplate,
   onSave,
   onCancel,
+  readOnly = false,
 }: DynamicFormBuilderProps) {
   const [title, setTitle] = useState(initialTemplate?.title || "New Client Intake Form");
   const [description, setDescription] = useState(
@@ -58,16 +61,19 @@ export default function DynamicFormBuilder({
   const [previewValues, setPreviewValues] = useState<Record<string, any>>({});
 
   const handleAddField = () => {
+    if (readOnly) return;
     setEditingField(null);
     setIsEditorModalOpen(true);
   };
 
   const handleEditField = (field: FormField) => {
+    if (readOnly) return;
     setEditingField(field);
     setIsEditorModalOpen(true);
   };
 
   const handleSaveField = (savedField: FormField) => {
+    if (readOnly) return;
     if (editingField) {
       setFields(fields.map(f => (f.id === savedField.id ? savedField : f)));
     } else {
@@ -76,6 +82,7 @@ export default function DynamicFormBuilder({
   };
 
   const handleDeleteField = async (fieldId: string) => {
+    if (readOnly) return;
     const ok = await confirm({
       title: "Remove this field?",
       message: "This permanently removes the field from your form template. Any conditional rules referencing it may stop working.",
@@ -87,6 +94,7 @@ export default function DynamicFormBuilder({
   };
 
   const handleDuplicateField = (field: FormField) => {
+    if (readOnly) return;
     const duplicated: FormField = {
       ...field,
       id: `field_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
@@ -96,6 +104,7 @@ export default function DynamicFormBuilder({
   };
 
   const handleMoveField = (index: number, direction: "up" | "down") => {
+    if (readOnly) return;
     const targetIndex = direction === "up" ? index - 1 : index + 1;
     if (targetIndex < 0 || targetIndex >= fields.length) return;
     const newFields = [...fields];
@@ -110,6 +119,7 @@ export default function DynamicFormBuilder({
   };
 
   const handleSaveTemplate = () => {
+    if (readOnly) return;
     if (!title.trim()) {
       setTitleError(true);
       toast.error("Please provide a Template Title.");
@@ -141,6 +151,15 @@ export default function DynamicFormBuilder({
 
   return (
     <div className="space-y-6">
+      {readOnly && (
+        <div className="p-4 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-800 flex items-center gap-2.5">
+          <Lock className="w-4 h-4 text-amber-600 flex-shrink-0" />
+          <span>
+            You are viewing this template in read-only mode. Only Firm Admins and Case Managers can edit form templates.
+          </span>
+        </div>
+      )}
+
       {/* Top Header Card */}
       <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="space-y-1">
@@ -196,20 +215,22 @@ export default function DynamicFormBuilder({
             </button>
           )}
 
-          <button
-            type="button"
-            onClick={handleSaveTemplate}
-            disabled={isSaving}
-            title={isSaving ? "Saving template…" : "Save Template"}
-            className="flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-white bg-brand-600 hover:brightness-110 rounded-xl shadow-sm transition-all duration-150 ease-out active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-1"
-          >
-            {isSaving ? (
-              <Loader2 className="w-3.5 h-3.5 animate-spin" />
-            ) : (
-              <Save className="w-3.5 h-3.5" />
-            )}
-            <span>{isSaving ? "Saving…" : "Save Template"}</span>
-          </button>
+          {!readOnly && (
+            <button
+              type="button"
+              onClick={handleSaveTemplate}
+              disabled={isSaving}
+              title={isSaving ? "Saving template…" : "Save Template"}
+              className="flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-white bg-brand-600 hover:brightness-110 rounded-xl shadow-sm transition-all duration-150 ease-out active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-1"
+            >
+              {isSaving ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              ) : (
+                <Save className="w-3.5 h-3.5" />
+              )}
+              <span>{isSaving ? "Saving…" : "Save Template"}</span>
+            </button>
+          )}
         </div>
       </div>
 
@@ -230,6 +251,7 @@ export default function DynamicFormBuilder({
                   id="template_title_input"
                   type="text"
                   value={title}
+                  disabled={readOnly}
                   onChange={(e) => {
                     setTitle(e.target.value);
                     if (titleError) setTitleError(false);
@@ -237,7 +259,7 @@ export default function DynamicFormBuilder({
                   onBlur={() => setTitleError(!title.trim())}
                   placeholder="e.g. Corporate Legal Intake & KYC Form"
                   aria-invalid={titleError}
-                  className={`w-full px-3 py-2 border rounded-lg text-xs transition-all duration-150 ease-out focus:ring-2 focus:ring-brand-500 focus:outline-none ${
+                  className={`w-full px-3 py-2 border rounded-lg text-xs transition-all duration-150 ease-out focus:ring-2 focus:ring-brand-500 focus:outline-none disabled:bg-slate-50 disabled:text-slate-500 disabled:cursor-not-allowed ${
                     titleError ? "border-rose-400" : "border-slate-300"
                   }`}
                 />
@@ -253,9 +275,10 @@ export default function DynamicFormBuilder({
                 <input
                   type="text"
                   value={category}
+                  disabled={readOnly}
                   onChange={(e) => setCategory(e.target.value)}
                   placeholder="e.g. Tax & Accounting, Corporate Counsel"
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs focus:ring-2 focus:ring-brand-500 focus:outline-none"
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs focus:ring-2 focus:ring-brand-500 focus:outline-none disabled:bg-slate-50 disabled:text-slate-500 disabled:cursor-not-allowed"
                 />
               </div>
 
@@ -266,9 +289,10 @@ export default function DynamicFormBuilder({
                 <textarea
                   rows={4}
                   value={description}
+                  disabled={readOnly}
                   onChange={(e) => setDescription(e.target.value)}
                   placeholder="Instructions displayed at the top of the client form..."
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs focus:ring-2 focus:ring-brand-500 focus:outline-none"
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs focus:ring-2 focus:ring-brand-500 focus:outline-none disabled:bg-slate-50 disabled:text-slate-500 disabled:cursor-not-allowed"
                 />
               </div>
             </div>
@@ -295,14 +319,16 @@ export default function DynamicFormBuilder({
                     Add, edit, reorder, and configure conditional rules for your questionnaire.
                   </p>
                 </div>
-                <button
-                  type="button"
-                  onClick={handleAddField}
-                  className="flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold text-white bg-brand-600 hover:brightness-110 rounded-lg shadow-sm transition-all duration-150 ease-out active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-1"
-                >
-                  <Plus className="w-3.5 h-3.5" />
-                  <span>Add Field</span>
-                </button>
+                {!readOnly && (
+                  <button
+                    type="button"
+                    onClick={handleAddField}
+                    className="flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold text-white bg-brand-600 hover:brightness-110 rounded-lg shadow-sm transition-all duration-150 ease-out active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-1"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>Add Field</span>
+                  </button>
+                )}
               </div>
 
               {fields.length === 0 ? (
@@ -318,14 +344,16 @@ export default function DynamicFormBuilder({
                       ? "Add at least one field before saving this template."
                       : 'Click "Add Field" to start building your client questionnaire.'}
                   </p>
-                  <button
-                    type="button"
-                    onClick={handleAddField}
-                    className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold text-brand-600 bg-brand-50 hover:bg-brand-100 rounded-lg transition-all duration-150 ease-out active:scale-[0.98] border border-brand-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-1"
-                  >
-                    <Plus className="w-3.5 h-3.5" />
-                    <span>Add First Question</span>
-                  </button>
+                  {!readOnly && (
+                    <button
+                      type="button"
+                      onClick={handleAddField}
+                      className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold text-brand-600 bg-brand-50 hover:bg-brand-100 rounded-lg transition-all duration-150 ease-out active:scale-[0.98] border border-brand-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-1"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      <span>Add First Question</span>
+                    </button>
+                  )}
                 </div>
               ) : (
                 <div className="space-y-3">
@@ -378,62 +406,64 @@ export default function DynamicFormBuilder({
                         </div>
 
                         {/* Actions */}
-                        <div className="flex items-center gap-1">
-                          {/* Reorder Buttons */}
-                          <button
-                            type="button"
-                            disabled={index === 0}
-                            onClick={() => handleMoveField(index, "up")}
-                            title="Move Up"
-                            aria-label="Move field up"
-                            className="p-2.5 text-slate-400 hover:text-slate-700 hover:bg-slate-200 rounded transition-all duration-150 ease-out active:scale-[0.98] disabled:opacity-30 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-1"
-                          >
-                            <ArrowUp className="w-3.5 h-3.5" />
-                          </button>
-                          <button
-                            type="button"
-                            disabled={index === fields.length - 1}
-                            onClick={() => handleMoveField(index, "down")}
-                            title="Move Down"
-                            aria-label="Move field down"
-                            className="p-2.5 text-slate-400 hover:text-slate-700 hover:bg-slate-200 rounded transition-all duration-150 ease-out active:scale-[0.98] disabled:opacity-30 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-1"
-                          >
-                            <ArrowDown className="w-3.5 h-3.5" />
-                          </button>
+                        {!readOnly && (
+                          <div className="flex items-center gap-1">
+                            {/* Reorder Buttons */}
+                            <button
+                              type="button"
+                              disabled={index === 0}
+                              onClick={() => handleMoveField(index, "up")}
+                              title="Move Up"
+                              aria-label="Move field up"
+                              className="p-2.5 text-slate-400 hover:text-slate-700 hover:bg-slate-200 rounded transition-all duration-150 ease-out active:scale-[0.98] disabled:opacity-30 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-1"
+                            >
+                              <ArrowUp className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                              type="button"
+                              disabled={index === fields.length - 1}
+                              onClick={() => handleMoveField(index, "down")}
+                              title="Move Down"
+                              aria-label="Move field down"
+                              className="p-2.5 text-slate-400 hover:text-slate-700 hover:bg-slate-200 rounded transition-all duration-150 ease-out active:scale-[0.98] disabled:opacity-30 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-1"
+                            >
+                              <ArrowDown className="w-3.5 h-3.5" />
+                            </button>
 
-                          {/* Duplicate */}
-                          <button
-                            type="button"
-                            onClick={() => handleDuplicateField(f)}
-                            title="Duplicate Field"
-                            aria-label="Duplicate field"
-                            className="p-2.5 text-slate-400 hover:text-slate-700 hover:bg-slate-200 rounded transition-all duration-150 ease-out active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-1"
-                          >
-                            <Copy className="w-3.5 h-3.5" />
-                          </button>
+                            {/* Duplicate */}
+                            <button
+                              type="button"
+                              onClick={() => handleDuplicateField(f)}
+                              title="Duplicate Field"
+                              aria-label="Duplicate field"
+                              className="p-2.5 text-slate-400 hover:text-slate-700 hover:bg-slate-200 rounded transition-all duration-150 ease-out active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-1"
+                            >
+                              <Copy className="w-3.5 h-3.5" />
+                            </button>
 
-                          {/* Edit */}
-                          <button
-                            type="button"
-                            onClick={() => handleEditField(f)}
-                            title="Edit Field"
-                            aria-label="Edit field"
-                            className="p-2.5 text-slate-400 hover:text-brand-600 hover:bg-brand-50 rounded transition-all duration-150 ease-out active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-1"
-                          >
-                            <Edit2 className="w-3.5 h-3.5" />
-                          </button>
+                            {/* Edit */}
+                            <button
+                              type="button"
+                              onClick={() => handleEditField(f)}
+                              title="Edit Field"
+                              aria-label="Edit field"
+                              className="p-2.5 text-slate-400 hover:text-brand-600 hover:bg-brand-50 rounded transition-all duration-150 ease-out active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-1"
+                            >
+                              <Edit2 className="w-3.5 h-3.5" />
+                            </button>
 
-                          {/* Delete */}
-                          <button
-                            type="button"
-                            onClick={() => handleDeleteField(f.id)}
-                            title="Delete Field"
-                            aria-label="Delete field"
-                            className="p-2.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded transition-all duration-150 ease-out active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-1"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
+                            {/* Delete */}
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteField(f.id)}
+                              title="Delete Field"
+                              aria-label="Delete field"
+                              className="p-2.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded transition-all duration-150 ease-out active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-1"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        )}
                       </div>
                     );
                   })}

@@ -19,6 +19,14 @@ import {
 
 const HEX_COLOR_PATTERN = /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/;
 
+function slugify(input: string): string {
+  return input
+    .toLowerCase()
+    .replace(/[^a-z0-9-]/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "");
+}
+
 export default function SignupPage() {
   const router = useRouter();
   const { signupAdmin } = useAuth();
@@ -37,8 +45,8 @@ export default function SignupPage() {
 
   const handleFirmNameChange = (val: string) => {
     setFirmName(val);
-    if (!slug || slug === firmName.toLowerCase().replace(/[^a-z0-9]/g, "-")) {
-      setSlug(val.toLowerCase().replace(/[^a-z0-9]/g, "-"));
+    if (!slug || slug === slugify(firmName)) {
+      setSlug(slugify(val));
     }
   };
 
@@ -57,7 +65,13 @@ export default function SignupPage() {
       return;
     }
 
-    const normalizedSlug = slug.trim().toLowerCase() || "firm-tenant";
+    const normalizedSlug = slugify(slug);
+    if (!/^[a-z0-9]+(-[a-z0-9]+)*$/.test(normalizedSlug)) {
+      setSlugError("Slug must be lowercase letters, numbers, and hyphens only (e.g. apex-advisory).");
+      toast.error("Please enter a valid portal slug before continuing.");
+      return;
+    }
+
     if (DataStore.getFirmBySlug(normalizedSlug)) {
       setSlugError("That portal slug is already taken. Please choose another.");
       toast.error("That portal slug is already in use by another firm.");
@@ -128,9 +142,22 @@ export default function SignupPage() {
                     required
                     value={slug}
                     onChange={(e) => {
-                      setSlug(e.target.value);
+                      // Restrict to URL-safe characters and collapse repeated
+                      // hyphens as the user types, so a stray "/" or a run of
+                      // symbols can never end up in a portal route segment.
+                      // Leading/trailing hyphens are trimmed on blur/submit
+                      // instead of here, so a hyphen the user just typed isn't
+                      // stripped before they type the next character.
+                      setSlug(
+                        e.target.value
+                          .toLowerCase()
+                          .replace(/[^a-z0-9-]/g, "-")
+                          .replace(/-+/g, "-")
+                      );
                       if (slugError) setSlugError("");
                     }}
+                    onBlur={() => setSlug((prev) => slugify(prev))}
+                    maxLength={64}
                     placeholder="apex-advisory"
                     aria-invalid={!!slugError}
                     className={`w-full px-3 py-2 bg-slate-900 border rounded-lg text-white text-xs font-mono transition focus:ring-2 focus:outline-none ${

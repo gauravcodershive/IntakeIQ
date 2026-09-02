@@ -8,6 +8,7 @@ import { DataStore } from "@/lib/store/dataStore";
 import { FormTemplate, FormField } from "@/lib/types";
 import DynamicFormBuilder from "@/components/forms/DynamicFormBuilder";
 import { useToast } from "@/components/shared/ToastProvider";
+import { hasPermission } from "@/lib/auth/permissions";
 
 function FormBuilderContent() {
   const searchParams = useSearchParams();
@@ -36,12 +37,15 @@ function FormBuilderContent() {
     return <div className="p-8 text-center text-xs text-slate-500">Loading Form Builder...</div>;
   }
 
+  const readOnly = !hasPermission(role, "forms:edit");
+
   const handleSave = (data: {
     title: string;
     description: string;
     category: string;
     fields: FormField[];
   }) => {
+    if (readOnly) return;
     if (!currentFirm) {
       toast.error("No active firm selected. Please refresh and try again.");
       return;
@@ -82,6 +86,7 @@ function FormBuilderContent() {
         initialTemplate={template}
         onSave={handleSave}
         onCancel={() => router.push("/dashboard/forms")}
+        readOnly={readOnly}
       />
     </div>
   );

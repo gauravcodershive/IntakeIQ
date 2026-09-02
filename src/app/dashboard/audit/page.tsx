@@ -15,8 +15,21 @@ import {
   FileCheck2,
   Lock,
   ClipboardList,
-  X
+  X,
+  Download
 } from "lucide-react";
+
+function downloadTextFile(filename: string, content: string, mimeType: string) {
+  const blob = new Blob([content], { type: mimeType });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+}
 
 export default function AuditTrailPage() {
   const { currentFirm } = useTenant();
@@ -54,6 +67,19 @@ export default function AuditTrailPage() {
     setSelectedAction("ALL");
   };
 
+  const handleExportCSV = () => {
+    const csv = DataStore.auditLogsToCSV(filteredLogs);
+    downloadTextFile(`intakeiq-audit-log-${currentFirm?.slug || "firm"}.csv`, csv, "text/csv;charset=utf-8;");
+  };
+
+  const handleExportJSON = () => {
+    downloadTextFile(
+      `intakeiq-audit-log-${currentFirm?.slug || "firm"}.json`,
+      JSON.stringify(filteredLogs, null, 2),
+      "application/json"
+    );
+  };
+
   const getActionBadgeColor = (action: string) => {
     if (action.includes("Approved")) return "bg-emerald-50 text-emerald-700 border-emerald-200";
     if (action.includes("Rejected")) return "bg-rose-50 text-rose-700 border-rose-200";
@@ -79,6 +105,27 @@ export default function AuditTrailPage() {
           <p className="text-xs text-slate-500 mt-0.5">
             Every submission, upload, review decision, status update, and team invitation is cryptographically logged.
           </p>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={handleExportCSV}
+            disabled={filteredLogs.length === 0}
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-slate-700 bg-white hover:bg-slate-50 rounded-xl border border-slate-200 shadow-xs transition-all duration-150 ease-out active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2"
+          >
+            <Download className="w-3.5 h-3.5 text-slate-500" />
+            <span>Export CSV</span>
+          </button>
+          <button
+            type="button"
+            onClick={handleExportJSON}
+            disabled={filteredLogs.length === 0}
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-slate-700 bg-white hover:bg-slate-50 rounded-xl border border-slate-200 shadow-xs transition-all duration-150 ease-out active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2"
+          >
+            <Download className="w-3.5 h-3.5 text-slate-500" />
+            <span>Export JSON</span>
+          </button>
         </div>
       </div>
 

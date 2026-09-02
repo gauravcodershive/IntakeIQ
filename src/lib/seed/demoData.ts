@@ -1,4 +1,4 @@
-import { Firm, UserProfile, FormTemplate, ClientCase, AuditLogEntry, EmailNotification } from "../types";
+import { Firm, UserProfile, FormTemplate, ClientCase, AuditLogEntry, EmailNotification, AppNotification } from "../types";
 
 export const INITIAL_FIRMS: Firm[] = [
   {
@@ -249,7 +249,19 @@ export const INITIAL_CASES: ClientCase[] = [
             uploadedAt: "2026-02-18T16:50:00Z",
             uploadedBy: "David Chen"
           }
-        ]
+        ],
+        extraction: {
+          documentType: "Corporate Formation Document",
+          confidence: 96,
+          extractedAt: "2026-02-18T16:50:30Z",
+          fields: [
+            { label: "Entity Legal Name", value: "Lumina Health Technologies Inc.", status: "match" },
+            { label: "Filing Jurisdiction", value: "Delaware", status: "match" },
+            { label: "Filing Date", value: "2026-02-15", status: "unverified" },
+            { label: "Registered Agent", value: "Corporate Services Inc.", status: "unverified" },
+          ],
+          crossCheckSummary: "2 of 2 verifiable fields matched form responses",
+        },
       },
       {
         id: "chk-2",
@@ -268,7 +280,19 @@ export const INITIAL_CASES: ClientCase[] = [
             uploadedAt: "2026-02-18T16:52:00Z",
             uploadedBy: "David Chen"
           }
-        ]
+        ],
+        extraction: {
+          documentType: "Government ID",
+          confidence: 58,
+          extractedAt: "2026-02-18T16:52:30Z",
+          fields: [
+            { label: "Full Legal Name", value: "David J. Chen", status: "mismatch" },
+            { label: "Date of Birth", value: "04/12/1985", status: "unverified" },
+            { label: "ID / Document Number", value: "71-4820193", status: "unverified" },
+            { label: "Issuing Authority", value: "U.S. Department of State", status: "unverified" },
+          ],
+          crossCheckSummary: "0 of 1 verifiable field matched form responses — 1 flagged for review",
+        },
       },
       {
         id: "chk-3",
@@ -533,4 +557,57 @@ export const INITIAL_EMAILS: EmailNotification[] = [
     status: "delivered",
     metadata: { caseId: "case-101" }
   }
+];
+
+export const INITIAL_NOTIFICATIONS: AppNotification[] = [
+  {
+    id: "notif-1",
+    firmId: "firm-apex",
+    type: "form_submitted",
+    title: "Intake form submitted",
+    message: "David Chen submitted their intake questionnaire for \"Series A Financing & Corporate Governance Intake\".",
+    caseId: "case-101",
+    read: true,
+    createdAt: "2026-02-18T16:45:00Z",
+  },
+  {
+    id: "notif-2",
+    firmId: "firm-apex",
+    type: "doc_approved",
+    title: "Document approved",
+    message: "Marcus Sterling approved \"Certificate of Incorporation (Delaware Secretary of State)\" for David Chen.",
+    caseId: "case-101",
+    read: true,
+    createdAt: "2026-02-19T10:30:00Z",
+  },
+  {
+    id: "notif-3",
+    firmId: "firm-apex",
+    type: "extraction_flagged",
+    title: "AI extraction flagged an issue",
+    message: "\"Government ID / Passport of Primary Officers\" on David Chen's case needs manual review — 0 of 1 verifiable field matched form responses — 1 flagged for review.",
+    caseId: "case-101",
+    read: false,
+    createdAt: "2026-02-18T16:52:30Z",
+  },
+  {
+    id: "notif-4",
+    firmId: "firm-apex",
+    type: "doc_rejected",
+    title: "Document rejected",
+    message: "Marcus Sterling rejected \"Government ID / Passport of Primary Officers\" for David Chen.",
+    caseId: "case-101",
+    read: false,
+    createdAt: "2026-02-19T10:32:00Z",
+  },
+  {
+    id: "notif-5",
+    firmId: "firm-apex",
+    type: "case_assigned",
+    title: "New case assigned to you",
+    message: "You've been assigned \"Partnership Agreement Restructuring\" for Maya Lin.",
+    caseId: "case-104",
+    read: false,
+    createdAt: "2026-02-25T11:00:00Z",
+  },
 ];

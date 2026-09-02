@@ -28,8 +28,21 @@ import {
   Edit,
   Save,
   MessageSquare,
-  ShieldCheck
+  ShieldCheck,
+  Download
 } from "lucide-react";
+
+function downloadTextFile(filename: string, content: string, mimeType: string) {
+  const blob = new Blob([content], { type: mimeType });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+}
 
 export default function CaseDetailPage() {
   const params = useParams();
@@ -135,7 +148,13 @@ export default function CaseDetailPage() {
       })
       .catch(() => {
         toast.error("Couldn't copy automatically — the link is shown below to copy manually.");
-        window.prompt("Copy the portal link:", portalUrl);
+        try {
+          window.prompt("Copy the portal link:", portalUrl);
+        } catch {
+          // window.prompt isn't available in every environment (e.g. some
+          // embedded/automated browser contexts) — the toast above already
+          // told the user copying failed, so there's nothing further to do.
+        }
       });
   };
 
@@ -375,13 +394,30 @@ export default function CaseDetailPage() {
       {/* 3. Audit Trail for this Case */}
       {activeTab === "audit" && (
         <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
-          <div className="border-b border-slate-100 pb-3">
-            <h3 className="text-sm font-bold text-slate-900">
-              Immutable Case Audit Log
-            </h3>
-            <p className="text-xs text-slate-500">
-              Complete chronological audit trail of all form submissions, uploads, reviews, and status changes.
-            </p>
+          <div className="border-b border-slate-100 pb-3 flex items-start justify-between gap-3">
+            <div>
+              <h3 className="text-sm font-bold text-slate-900">
+                Immutable Case Audit Log
+              </h3>
+              <p className="text-xs text-slate-500">
+                Complete chronological audit trail of all form submissions, uploads, reviews, and status changes.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() =>
+                downloadTextFile(
+                  `intakeiq-audit-${clientCase.id}.csv`,
+                  DataStore.auditLogsToCSV(auditLogs),
+                  "text/csv;charset=utf-8;"
+                )
+              }
+              disabled={auditLogs.length === 0}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-700 bg-white hover:bg-slate-50 rounded-lg border border-slate-200 shadow-xs transition-all duration-150 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2"
+            >
+              <Download className="w-3.5 h-3.5 text-slate-500" />
+              <span>Export CSV</span>
+            </button>
           </div>
 
           <div className="space-y-3">

@@ -21,6 +21,7 @@ import {
   ChevronRight,
   LogOut,
   X,
+  BarChart3,
 } from "lucide-react";
 import { PermissionAction, hasPermission, getRoleBadgeStyle } from "@/lib/auth/permissions";
 
@@ -81,6 +82,13 @@ export default function Sidebar({ isOpen = false, onClose }: SidebarProps) {
       icon: Settings,
       match: (p: string) => p.startsWith("/dashboard/settings"),
       permission: "settings:view",
+    },
+    {
+      name: "Analytics",
+      href: "/dashboard/analytics",
+      icon: BarChart3,
+      match: (p: string) => p.startsWith("/dashboard/analytics"),
+      permission: "audit:view",
     },
     {
       name: "Audit Trail",

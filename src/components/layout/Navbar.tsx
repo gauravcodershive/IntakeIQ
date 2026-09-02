@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import LogoMark from "@/components/shared/LogoMark";
 import {
@@ -29,6 +29,8 @@ export default function Navbar({ onRequestDemo, onOpenLogin }: NavbarProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [productOpen, setProductOpen] = useState(false);
   const [industriesOpen, setIndustriesOpen] = useState(false);
+  const productMenuRef = useRef<HTMLDivElement>(null);
+  const industriesMenuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -37,6 +39,37 @@ export default function Navbar({ onRequestDemo, onOpenLogin }: NavbarProps) {
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
+  // Click/touch-only open + outside-click close. A click always toggles the
+  // menu state directly — no hover handlers — so a mouse click can't fight
+  // with a mouseenter that just opened the same menu (which previously made
+  // a click appear to do nothing, and left the menu unreachable for
+  // keyboard/touch users who never fire hover events at all).
+  useEffect(() => {
+    if (!productOpen && !industriesOpen) return;
+    const onPointerDown = (e: MouseEvent | TouchEvent) => {
+      if (productOpen && productMenuRef.current && !productMenuRef.current.contains(e.target as Node)) {
+        setProductOpen(false);
+      }
+      if (industriesOpen && industriesMenuRef.current && !industriesMenuRef.current.contains(e.target as Node)) {
+        setIndustriesOpen(false);
+      }
+    };
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setProductOpen(false);
+        setIndustriesOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", onPointerDown);
+    document.addEventListener("touchstart", onPointerDown);
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", onPointerDown);
+      document.removeEventListener("touchstart", onPointerDown);
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, [productOpen, industriesOpen]);
 
   return (
     <header
@@ -67,16 +100,7 @@ export default function Navbar({ onRequestDemo, onOpenLogin }: NavbarProps) {
           {/* Desktop Navigation Links */}
           <nav className="hidden lg:flex items-center space-x-1 font-medium text-sm text-slate-700">
             {/* Product Dropdown */}
-            <div
-              className="relative"
-              onMouseEnter={() => setProductOpen(true)}
-              onMouseLeave={() => setProductOpen(false)}
-              onBlur={(e) => {
-                if (!e.currentTarget.contains(e.relatedTarget as Node)) {
-                  setProductOpen(false);
-                }
-              }}
-            >
+            <div className="relative" ref={productMenuRef}>
               <button
                 type="button"
                 onClick={() => setProductOpen((prev) => !prev)}
@@ -184,16 +208,7 @@ export default function Navbar({ onRequestDemo, onOpenLogin }: NavbarProps) {
             </div>
 
             {/* Industries Dropdown */}
-            <div
-              className="relative"
-              onMouseEnter={() => setIndustriesOpen(true)}
-              onMouseLeave={() => setIndustriesOpen(false)}
-              onBlur={(e) => {
-                if (!e.currentTarget.contains(e.relatedTarget as Node)) {
-                  setIndustriesOpen(false);
-                }
-              }}
-            >
+            <div className="relative" ref={industriesMenuRef}>
               <button
                 type="button"
                 onClick={() => setIndustriesOpen((prev) => !prev)}

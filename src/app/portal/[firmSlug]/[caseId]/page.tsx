@@ -250,7 +250,11 @@ export default function ClientPortalPage() {
           </div>
 
           {/* Navigation Tabs */}
-          <div className="flex space-x-1 sm:space-x-4 overflow-x-auto text-xs font-semibold">
+          {/* Wraps into a 2x2 grid below lg: so all 4 tabs are always visible
+              at once — a single scrollable row previously showed only ~2 of
+              the 4 (long) labels at mobile/tablet widths with no indication
+              that the rest were reachable by an undiscoverable horizontal swipe. */}
+          <div className="grid grid-cols-2 lg:flex lg:items-center gap-1 lg:gap-4 text-xs font-semibold">
             {[
               { id: "overview", label: "1. Overview & Instructions" },
               {
@@ -270,7 +274,7 @@ export default function ClientPortalPage() {
                   type="button"
                   onClick={() => setActiveTab(tab.id as any)}
                   aria-current={isActive ? "page" : undefined}
-                  className={`py-3 px-3 sm:px-4 border-b-2 font-semibold transition-all duration-150 whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 rounded-t ${
+                  className={`py-3 px-3 sm:px-4 border-b-2 font-semibold transition-all duration-150 text-center lg:text-left lg:whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 rounded-t ${
                     isActive
                       ? "border-current text-slate-900"
                       : "border-transparent text-slate-500 hover:text-slate-800 hover:border-slate-300"

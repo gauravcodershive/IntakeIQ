@@ -5,6 +5,11 @@ import {
   ClientCase,
   AuditLogEntry,
   EmailNotification,
+  AppNotification,
+  NotificationType,
+  DocumentExtraction,
+  ExtractedField,
+  ExtractedFieldStatus,
   UserRole,
   DocStatus,
   DocVersion,
@@ -17,7 +22,8 @@ import {
   INITIAL_FORM_TEMPLATES,
   INITIAL_CASES,
   INITIAL_AUDIT_LOGS,
-  INITIAL_EMAILS
+  INITIAL_EMAILS,
+  INITIAL_NOTIFICATIONS
 } from "../seed/demoData";
 
 const STORAGE_KEYS = {
@@ -27,9 +33,124 @@ const STORAGE_KEYS = {
   CASES: "intakeiq_cases_v1",
   AUDIT_LOGS: "intakeiq_audit_v1",
   EMAILS: "intakeiq_emails_v1",
+  NOTIFICATIONS: "intakeiq_notifications_v1",
   CURRENT_FIRM_ID: "intakeiq_current_firm_id",
   CURRENT_USER_ID: "intakeiq_current_user_id"
 };
+
+// ================= AI DOCUMENT EXTRACTION SIMULATION =================
+// No real OCR/AI backend is connected — this deterministically synthesizes
+// plausible extracted fields (deriving names from the case itself, with a
+// controlled chance of a deliberate mismatch) so the confidence-scoring and
+// cross-check UI has real, varied data to react to.
+const DOCUMENT_TYPE_TEMPLATES: { match: RegExp; type: string; fields: string[] }[] = [
+  {
+    match: /passport|driver|government id|identity|proof of identity/i,
+    type: "Government ID",
+    fields: ["Full Legal Name", "Date of Birth", "ID / Document Number", "Issuing Authority"],
+  },
+  {
+    match: /bank|wire authorization|good standing/i,
+    type: "Bank Statement / Letter",
+    fields: ["Account Holder Name", "Institution Name", "Account Number", "Statement Date"],
+  },
+  {
+    match: /tax|financial statement|1040|1120|1065|w-9|w-2/i,
+    type: "Tax / Financial Form",
+    fields: ["Entity / Filer Name", "Tax ID (EIN/SSN)", "Tax Year", "Reported Revenue"],
+  },
+  {
+    match: /certificate of incorporation|operating agreement|partnership agreement|cap table|assignment/i,
+    type: "Corporate Formation Document",
+    fields: ["Entity Legal Name", "Filing Jurisdiction", "Filing Date", "Registered Agent"],
+  },
+];
+
+function detectDocumentType(docName: string): { type: string; fields: string[] } {
+  const found = DOCUMENT_TYPE_TEMPLATES.find((t) => t.match.test(docName));
+  return found ? { type: found.type, fields: found.fields } : { type: "General Document", fields: ["Document Title", "Page Count", "Detected Language"] };
+}
+
+function corruptName(name: string): string {
+  const parts = name.trim().split(" ");
+  if (parts.length > 1) {
+    return `${parts[0]} ${parts[parts.length - 1].charAt(0)}. ${parts[parts.length - 1]}`;
+  }
+  return `${name} Jr.`;
+}
+
+function generateExtractedField(label: string, c: ClientCase): ExtractedField {
+  let value = "";
+  let status: ExtractedFieldStatus = "unverified";
+
+  const isEntityNameField = /entity|legal name|filer|holder/i.test(label) && /name/i.test(label);
+  const isPersonNameField = /full legal name/i.test(label) || (/name/i.test(label) && !isEntityNameField && !/institution|agent/i.test(label));
+
+  if (isEntityNameField) {
+    const target = (c.formResponses?.field_company_legal_name as string) || c.clientCompany || c.clientName;
+    const shouldMismatch = Math.random() < 0.2;
+    value = shouldMismatch ? corruptName(target) : target;
+    status = shouldMismatch ? "mismatch" : "match";
+  } else if (isPersonNameField) {
+    const shouldMismatch = Math.random() < 0.2;
+    value = shouldMismatch ? corruptName(c.clientName) : c.clientName;
+    status = shouldMismatch ? "mismatch" : "match";
+  } else if (/date of birth/i.test(label)) {
+    value = "04/12/1985";
+  } else if (/tax id|ein|ssn|id \/ document number/i.test(label)) {
+    value = `${10 + Math.floor(Math.random() * 89)}-${1000000 + Math.floor(Math.random() * 8999999)}`;
+  } else if (/tax year/i.test(label)) {
+    value = "2025";
+  } else if (/jurisdiction/i.test(label)) {
+    value = (c.formResponses?.field_jurisdiction_state as string) || "Delaware";
+  } else if (/filing date|expiration date|statement date/i.test(label)) {
+    value = new Date(Date.parse(c.updatedAt) - Math.floor(Math.random() * 5) * 86400000).toISOString().slice(0, 10);
+  } else if (/account number/i.test(label)) {
+    value = `****${1000 + Math.floor(Math.random() * 8999)}`;
+  } else if (/institution/i.test(label)) {
+    value = "First National Trust Bank";
+  } else if (/revenue/i.test(label)) {
+    value = `$${(1_000_000 + Math.random() * 5_000_000).toFixed(0)}`;
+  } else if (/registered agent/i.test(label)) {
+    value = "Corporate Services Inc.";
+  } else if (/issuing authority/i.test(label)) {
+    value = "U.S. Department of State";
+  } else if (/page count/i.test(label)) {
+    value = String(1 + Math.floor(Math.random() * 8));
+  } else if (/language/i.test(label)) {
+    value = "English";
+  } else {
+    value = "—";
+  }
+
+  return { label, value, status };
+}
+
+function simulateDocumentExtraction(docName: string, c: ClientCase): DocumentExtraction {
+  const { type, fields: fieldLabels } = detectDocumentType(docName);
+  const fields = fieldLabels.map((label) => generateExtractedField(label, c));
+  const matchCount = fields.filter((f) => f.status === "match").length;
+  const mismatchCount = fields.filter((f) => f.status === "mismatch").length;
+  const verifiableCount = matchCount + mismatchCount;
+
+  const crossCheckSummary =
+    verifiableCount > 0
+      ? `${matchCount} of ${verifiableCount} verifiable field${verifiableCount === 1 ? "" : "s"} matched form responses${
+          mismatchCount > 0 ? ` — ${mismatchCount} flagged for review` : ""
+        }`
+      : "No cross-checkable fields for this document type";
+
+  const baseConfidence = mismatchCount > 0 ? 62 : 88;
+  const confidence = Math.min(99, Math.max(55, Math.round(baseConfidence + (Math.random() * 10 - 5))));
+
+  return {
+    documentType: type,
+    confidence,
+    extractedAt: new Date().toISOString(),
+    fields,
+    crossCheckSummary,
+  };
+}
 
 // Helper to safely get local storage items
 function getLocalItem<T>(key: string, fallback: T): T {
@@ -78,6 +199,9 @@ export class DataStore {
     if (!localStorage.getItem(STORAGE_KEYS.EMAILS)) {
       setLocalItem(STORAGE_KEYS.EMAILS, INITIAL_EMAILS);
     }
+    if (!localStorage.getItem(STORAGE_KEYS.NOTIFICATIONS)) {
+      setLocalItem(STORAGE_KEYS.NOTIFICATIONS, INITIAL_NOTIFICATIONS);
+    }
   }
 
   // Reset demo store
@@ -89,6 +213,7 @@ export class DataStore {
     setLocalItem(STORAGE_KEYS.CASES, INITIAL_CASES);
     setLocalItem(STORAGE_KEYS.AUDIT_LOGS, INITIAL_AUDIT_LOGS);
     setLocalItem(STORAGE_KEYS.EMAILS, INITIAL_EMAILS);
+    setLocalItem(STORAGE_KEYS.NOTIFICATIONS, INITIAL_NOTIFICATIONS);
     window.location.reload();
   }
 
@@ -266,6 +391,16 @@ export class DataStore {
       metadata: { caseId: newCase.id, portalUrl }
     });
 
+    if (newCase.assignedToName) {
+      this.addNotification({
+        firmId: newCase.firmId,
+        type: "case_assigned",
+        title: "New case assigned to you",
+        message: `You've been assigned "${newCase.title}" for ${newCase.clientName}.`,
+        caseId: newCase.id,
+      });
+    }
+
     return newCase;
   }
 
@@ -352,6 +487,14 @@ export class DataStore {
       metadata: { caseId: c.id }
     });
 
+    this.addNotification({
+      firmId: c.firmId,
+      type: "form_submitted",
+      title: "Intake form submitted",
+      message: `${actorName} submitted their intake questionnaire for "${c.title}".`,
+      caseId: c.id,
+    });
+
     return updated;
   }
 
@@ -379,11 +522,14 @@ export class DataStore {
       uploadedBy: fileInfo.uploadedBy,
     };
 
+    const extraction = simulateDocumentExtraction(item.name, c);
+
     const updatedItem: ChecklistItem = {
       ...item,
       status: "Uploaded",
       rejectionReason: undefined,
       versions: [...(item.versions || []), newVersion],
+      extraction,
     };
 
     checklist[itemIndex] = updatedItem;
@@ -405,6 +551,18 @@ export class DataStore {
       details: `File size: ${(fileInfo.fileSize / (1024 * 1024)).toFixed(2)} MB.`
     });
 
+    this.addAuditLog({
+      firmId: c.firmId,
+      caseId: c.id,
+      caseTitle: c.title,
+      actorId: "system-ai",
+      actorName: "IntakeIQ AI Extraction",
+      actorRole: "Staff",
+      action: "AI Extraction Completed",
+      targetEntity: `${item.name} — ${extraction.documentType}`,
+      details: `Confidence ${extraction.confidence}%. ${extraction.crossCheckSummary}.`
+    });
+
     // Notify staff
     const firm = this.getFirmById(c.firmId);
     this.sendEmail({
@@ -416,6 +574,25 @@ export class DataStore {
       type: "doc_uploaded",
       metadata: { caseId: c.id, checklistItemId }
     });
+
+    this.addNotification({
+      firmId: c.firmId,
+      type: "doc_uploaded",
+      title: "Document uploaded",
+      message: `${fileInfo.uploadedBy} uploaded "${item.name}" for ${c.clientName}'s case.`,
+      caseId: c.id,
+    });
+
+    const hasMismatch = extraction.fields.some((f) => f.status === "mismatch");
+    if (hasMismatch || extraction.confidence < 75) {
+      this.addNotification({
+        firmId: c.firmId,
+        type: "extraction_flagged",
+        title: "AI extraction flagged an issue",
+        message: `"${item.name}" on ${c.clientName}'s case needs manual review — ${extraction.crossCheckSummary}.`,
+        caseId: c.id,
+      });
+    }
 
     return updated;
   }
@@ -485,6 +662,24 @@ export class DataStore {
       });
     }
 
+    this.addNotification({
+      firmId: c.firmId,
+      type: status === "Approved" ? "doc_approved" : "doc_rejected",
+      title: status === "Approved" ? "Document approved" : "Document rejected",
+      message: `${reviewer.name} ${status === "Approved" ? "approved" : "rejected"} "${item.name}" for ${c.clientName}.`,
+      caseId: c.id,
+    });
+
+    if (newCaseStatus === "Approved" && c.status !== "Approved") {
+      this.addNotification({
+        firmId: c.firmId,
+        type: "case_approved",
+        title: "Case fully approved",
+        message: `"${c.title}" for ${c.clientName} has completed onboarding and is now fully approved.`,
+        caseId: c.id,
+      });
+    }
+
     return updated;
   }
 
@@ -527,5 +722,56 @@ export class DataStore {
     emails.unshift(newEmail);
     setLocalItem(STORAGE_KEYS.EMAILS, emails);
     return newEmail;
+  }
+
+  // ================= IN-APP NOTIFICATIONS =================
+  public static getNotifications(firmId: string): AppNotification[] {
+    const items = getLocalItem<AppNotification[]>(STORAGE_KEYS.NOTIFICATIONS, INITIAL_NOTIFICATIONS);
+    return items
+      .filter((n) => n.firmId === firmId)
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  }
+
+  public static addNotification(entry: Omit<AppNotification, "id" | "createdAt" | "read">): AppNotification {
+    const items = getLocalItem<AppNotification[]>(STORAGE_KEYS.NOTIFICATIONS, INITIAL_NOTIFICATIONS);
+    const newItem: AppNotification = {
+      ...entry,
+      id: `notif-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+      read: false,
+      createdAt: new Date().toISOString(),
+    };
+    items.unshift(newItem);
+    setLocalItem(STORAGE_KEYS.NOTIFICATIONS, items);
+    return newItem;
+  }
+
+  public static markNotificationRead(notificationId: string): void {
+    const items = getLocalItem<AppNotification[]>(STORAGE_KEYS.NOTIFICATIONS, INITIAL_NOTIFICATIONS);
+    const idx = items.findIndex((n) => n.id === notificationId);
+    if (idx === -1) return;
+    items[idx] = { ...items[idx], read: true };
+    setLocalItem(STORAGE_KEYS.NOTIFICATIONS, items);
+  }
+
+  public static markAllNotificationsRead(firmId: string): void {
+    const items = getLocalItem<AppNotification[]>(STORAGE_KEYS.NOTIFICATIONS, INITIAL_NOTIFICATIONS);
+    const next = items.map((n) => (n.firmId === firmId ? { ...n, read: true } : n));
+    setLocalItem(STORAGE_KEYS.NOTIFICATIONS, next);
+  }
+
+  // ================= AUDIT / COMPLIANCE EXPORT =================
+  public static auditLogsToCSV(logs: AuditLogEntry[]): string {
+    const header = ["Timestamp", "Case", "Actor", "Role", "Action", "Target", "Details"];
+    const rows = logs.map((l) => [
+      l.timestamp,
+      l.caseTitle || l.caseId || "",
+      l.actorName,
+      l.actorRole,
+      l.action,
+      l.targetEntity,
+      l.details || "",
+    ]);
+    const escape = (val: string) => `"${String(val).replace(/"/g, '""')}"`;
+    return [header, ...rows].map((row) => row.map(escape).join(",")).join("\n");
   }
 }

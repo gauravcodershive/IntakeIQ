@@ -73,6 +73,16 @@ service cloud.firestore {
         allow create: if isSameTenant(firmId) || isAuthenticated();
         allow update, delete: if false; // Immutable!
       }
+
+      // In-App Notifications Subcollection
+      match /notifications/{notificationId} {
+        allow read: if isStaff(firmId);
+        allow create: if isSameTenant(firmId) || isAuthenticated();
+        // Only the "read" flag may ever change client-side; everything else is append-only.
+        allow update: if isStaff(firmId) &&
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read']);
+        allow delete: if isAdmin(firmId);
+      }
     }
   }
 }
