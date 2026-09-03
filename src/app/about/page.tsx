@@ -166,7 +166,10 @@ export default function AboutPage() {
                       Having observed how accounting firms, law practices, and financial advisories continuously lose hundreds of billable hours tracking down missing PBC checklists, chasing unencrypted email attachments, and navigating clunky legacy software, Karan envisioned a purpose-built system.
                     </p>
                     <p>
-                      Under Karan&apos;s leadership, IntakeIQ was engineered from day one around **zero-friction client portals**, **strict multi-tenant database isolation**, and **intelligent automated document verification**—enabling firms to turn onboarding turnaround times from weeks into mere hours.
+                      Under Karan&apos;s leadership, IntakeIQ was engineered from day one around{" "}
+                      <strong className="font-semibold text-white">zero-friction client portals</strong>,{" "}
+                      <strong className="font-semibold text-white">strict multi-tenant database isolation</strong>, and{" "}
+                      <strong className="font-semibold text-white">intelligent automated document verification</strong>—enabling firms to turn onboarding turnaround times from weeks into mere hours.
                     </p>
                   </div>
 

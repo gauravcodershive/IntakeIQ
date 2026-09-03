@@ -102,7 +102,10 @@ export default function FounderSection() {
                     <strong>Karan Mittal</strong> founded IntakeIQ with a resolute mission: to permanently eradicate the chaos, security risks, and administrative fatigue of client data collection for professional service firms.
                   </p>
                   <p>
-                    Recognizing that CPAs, legal partners, and wealth managers spend hundreds of unbilled hours chasing missing PBC documents and unencrypted email threads, Karan engineered a unified platform combining **instant magic-link client portals**, **immutable audit trails**, and **per-tenant database isolation**.
+                    Recognizing that CPAs, legal partners, and wealth managers spend hundreds of unbilled hours chasing missing PBC documents and unencrypted email threads, Karan engineered a unified platform combining{" "}
+                    <strong className="font-semibold text-white">instant magic-link client portals</strong>,{" "}
+                    <strong className="font-semibold text-white">immutable audit trails</strong>, and{" "}
+                    <strong className="font-semibold text-white">per-tenant database isolation</strong>.
                   </p>
                   <p>
                     Today, IntakeIQ empowers high-trust firms to onboard clients 70% faster while maintaining compliance and unmatched client satisfaction.
