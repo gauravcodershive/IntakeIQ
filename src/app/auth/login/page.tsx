@@ -416,10 +416,9 @@ export default function LoginPage() {
                 {/* Admin Profile */}
                 <button
                   type="button"
-                  onClick={() => handleQuickLogin("Admin", "admin@apexadvisory.com", "firm-apex")}
-                  disabled={isQuickLoggingIn}
-                  title={isQuickLoggingIn ? "Signing you in…" : undefined}
-                  className="p-3 bg-slate-50 hover:bg-white rounded-xl border border-slate-200 hover:border-purple-300 hover:shadow-xs text-left transition-all duration-150 ease-out active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2"
+                  disabled
+                  aria-disabled="true"
+                  className="p-3 bg-slate-50 rounded-xl border border-slate-200 text-left transition-all duration-150 ease-out opacity-60 cursor-not-allowed group focus-visible:outline-none"
                 >
                   <div className="flex items-center gap-1.5 text-purple-600 font-bold text-xs">
                     <ShieldCheck className="w-3.5 h-3.5" />
@@ -431,10 +430,9 @@ export default function LoginPage() {
                 {/* Case Manager Profile */}
                 <button
                   type="button"
-                  onClick={() => handleQuickLogin("CaseManager", "casemanager@apexadvisory.com", "firm-apex")}
-                  disabled={isQuickLoggingIn}
-                  title={isQuickLoggingIn ? "Signing you in…" : undefined}
-                  className="p-3 bg-slate-50 hover:bg-white rounded-xl border border-slate-200 hover:border-blue-300 hover:shadow-xs text-left transition-all duration-150 ease-out active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2"
+                  disabled
+                  aria-disabled="true"
+                  className="p-3 bg-slate-50 rounded-xl border border-slate-200 text-left transition-all duration-150 ease-out opacity-60 cursor-not-allowed group focus-visible:outline-none"
                 >
                   <div className="flex items-center gap-1.5 text-blue-600 font-bold text-xs">
                     <UserCheck className="w-3.5 h-3.5" />
@@ -446,10 +444,9 @@ export default function LoginPage() {
                 {/* Staff Profile */}
                 <button
                   type="button"
-                  onClick={() => handleQuickLogin("Staff", "staff@apexadvisory.com", "firm-apex")}
-                  disabled={isQuickLoggingIn}
-                  title={isQuickLoggingIn ? "Signing you in…" : undefined}
-                  className="p-3 bg-slate-50 hover:bg-white rounded-xl border border-slate-200 hover:border-emerald-300 hover:shadow-xs text-left transition-all duration-150 ease-out active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2"
+                  disabled
+                  aria-disabled="true"
+                  className="p-3 bg-slate-50 rounded-xl border border-slate-200 text-left transition-all duration-150 ease-out opacity-60 cursor-not-allowed group focus-visible:outline-none"
                 >
                   <div className="flex items-center gap-1.5 text-emerald-600 font-bold text-xs">
                     <Eye className="w-3.5 h-3.5" />
@@ -461,10 +458,9 @@ export default function LoginPage() {
                 {/* Client Portal Profile */}
                 <button
                   type="button"
-                  onClick={handleClientQuickLogin}
-                  disabled={isQuickLoggingIn}
-                  title={isQuickLoggingIn ? "Opening portal…" : undefined}
-                  className="p-3 bg-slate-50 hover:bg-white rounded-xl border border-slate-200 hover:border-amber-300 hover:shadow-xs text-left transition-all duration-150 ease-out active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2"
+                  disabled
+                  aria-disabled="true"
+                  className="p-3 bg-slate-50 rounded-xl border border-slate-200 text-left transition-all duration-150 ease-out opacity-60 cursor-not-allowed group focus-visible:outline-none"
                 >
                   <div className="flex items-center gap-1.5 text-amber-600 font-bold text-xs">
                     <User className="w-3.5 h-3.5" />
