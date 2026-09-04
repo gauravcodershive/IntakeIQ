@@ -8,7 +8,6 @@ import Features from "@/components/sections/Features";
 import IndustrySolutions from "@/components/sections/IndustrySolutions";
 import SecuritySection from "@/components/sections/SecuritySection";
 import Testimonial from "@/components/sections/Testimonial";
-import FounderSection from "@/components/sections/FounderSection";
 import PricingPreview from "@/components/sections/PricingPreview";
 import CtaBanner from "@/components/sections/CtaBanner";
 import Footer from "@/components/layout/Footer";
@@ -62,10 +61,7 @@ export default function HomePage() {
         {/* 6. Testimonial Pull-Quote */}
         <Testimonial />
 
-        {/* 7. Founder Details & Mission */}
-        <FounderSection />
-
-        {/* 8. Pricing Preview */}
+        {/* 7. Pricing Preview */}
         <PricingPreview onRequestDemo={openDemo} />
 
         {/* 9. Final CTA Banner */}

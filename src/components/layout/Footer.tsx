@@ -209,11 +209,6 @@ export default function Footer({ onRequestDemo }: { onRequestDemo: () => void })
             </h4>
             <ul className="space-y-2.5 text-xs">
               <li>
-                <a href="/about" className="text-brand-400 hover:text-white font-medium transition-colors duration-150 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950">
-                  About Us & Leadership
-                </a>
-              </li>
-              <li>
                 <a href="/#security" className="hover:text-white transition-colors duration-150 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950">
                   Security Overview
                 </a>
@@ -255,12 +250,6 @@ export default function Footer({ onRequestDemo }: { onRequestDemo: () => void })
                 <span className="text-[10px] text-slate-500 block">Support:</span>
                 <a href="mailto:support@intakeiq.com" className="text-slate-400 hover:text-white transition">
                   support@intakeiq.com
-                </a>
-              </div>
-              <div className="pt-1">
-                <span className="text-[10px] text-brand-400 block font-medium">Founder Personal:</span>
-                <a href="mailto:karanmittal95337@gmail.com" className="text-slate-300 hover:text-brand-300 font-medium transition break-all">
-                  karanmittal95337@gmail.com
                 </a>
               </div>
             </div>

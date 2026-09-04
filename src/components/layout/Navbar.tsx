@@ -311,12 +311,6 @@ export default function Navbar({ onRequestDemo, onOpenLogin }: NavbarProps) {
               Security
             </a>
 
-            <Link
-              href="/about"
-              className="px-3.5 py-2 rounded-lg hover:text-brand-600 hover:bg-slate-50 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2"
-            >
-              About Us
-            </Link>
           </nav>
 
           {/* Right Action Buttons */}
@@ -446,13 +440,6 @@ export default function Navbar({ onRequestDemo, onOpenLogin }: NavbarProps) {
               >
                 Security & Isolation
               </a>
-              <Link
-                href="/about"
-                onClick={() => setMobileMenuOpen(false)}
-                className="block px-3 py-2 text-sm font-medium text-brand-600 hover:bg-slate-50 transition-colors duration-150 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2"
-              >
-                About Us & Founder
-              </Link>
             </div>
 
             <div className="pt-3 border-t border-slate-100 flex flex-col gap-2 px-3">
